@@ -39,6 +39,19 @@
   - [关联形式（Join Types）](#关联形式Join-Types)
   - [实现机制（Join Mechanisms）](#实现机制Join-Mechanisms)
 - [#18 数据关联优化：都有哪些Join策略，开发者该如何取舍？](#18-数据关联优化都有哪些Join策略开发者该如何取舍)
+  - [结论](#结论)
+  - [#19 配置项详解：哪些参数会影响应用程序执行性能？](#19-配置项详解哪些参数会影响应用程序执行性能)
+  - [#20  Hive + Spark强强联合](#20--Hive--Spark强强联合)
+  - [#21 Spark UI：如何高效地定位性能问题？](#21-Spark-UI如何高效地定位性能问题)
+  - [#24\* 特征工程](#24-特征工程)
+    - [Official Doc](#Official-Doc)
+    - [1) 预处理：StringIndexer](#1-预处理StringIndexer)
+    - [2) 特征选择：ChiSqSelector ](#2-特征选择ChiSqSelector-)
+    - [3) 归一化：MinMaxScaler](#3-归一化MinMaxScaler)
+    - [4)离散化：Bucketizer](#4离散化Bucketizer)
+    - [5) Embedding](#5-Embedding)
+    - [6) 向量计算](#6-向量计算)
+  - [#26 ML](#26-ML)
 
 ### #1 Hello World
 
@@ -75,7 +88,7 @@ print(wordCount)
 - 跟Spark的关系：是构建 Spark 分布式内存计算引擎的基石
 - 跟数组比较
 
-![](image/image_Bmw3rK3w0S.png)
+![](image/image_dBaV-vs2la.png)
 
 - 特性
   - partitions：数据分片
@@ -92,11 +105,11 @@ print(wordCount)
 - RDD 算子的第一个共性：RDD 转换。
 - 延迟计算Lazy Evaluation
   - 开发者调用的各类 Transformations 算子，并不立即执行计算，当且仅当开发者调用 Actions 算子时，之前调用的转换算子才会付诸执行
-    ![](image/image_Eg93dnWCsq.png)
+    ![](image/image_-GiZemJgvb.png)
   - 常用算子分类
     - Transformations 类算子：定义并描述数据形态的转换过程
     - Actions 类算子，将计算结果收集起来、或是物化到磁盘。
-      ![](image/image_jnuGg5U70y.png)
+      ![](image/image_O3pwHT3qS8.png)
 
 ### #3 RDD常用算子（一）：RDD内部的数据转换
 
@@ -183,7 +196,7 @@ val kvRDD: RDD[(String, Int)] = cleanWordRDD.mapPartitions( partition => {
 1. 以元素为单位，创建集合(下图步骤1，2）；
 2. 去掉集合“外包装”，提取集合元素（下图步骤3）。
 
-![](image/image_WOFJk9o7vR.png)
+![](image/image_-SsLUUd8Bt.png)
 
 #### 4) filter：过滤 RDD
 
@@ -228,7 +241,7 @@ Driver的助手：在 Spark 的 Driver 进程中，DAGScheduler、TaskScheduler 
 
 3\. 将分布式任务分发到 Executors 中去。
 
-![](image/image_qVbPzkfNGN.png)
+![](image/image_x0hTQ40Mkj.png)
 
 #### 2) spark-shell 执行过程解析
 
@@ -243,7 +256,7 @@ spark-shell --master local[*] #假设你的笔记本电脑有 4 个 CPU，那么
 
 **Shuffle** 的本意是扑克牌中的“洗牌”，在大数据领域的引申义，表示的是集群范围内跨进程、跨节点的数据交换。
 
-![](image/image_LkZNPgfDwE.png)
+![](image/image_sTtfODpnhn.png)
 
 #### 3) 分布式环境部署
 
@@ -257,15 +270,15 @@ YARN、Mesos、Kubernetes 是独立的第三方资源调度与服务编排框架
 
 为了方便描述，我们把 3 台 EC2 的 hostname 分别设置为 node0、node1、node2，并把 node0 选做 Master 节点，而把 node1、node2 选做 Worker 节点。
 
-![](image/image_nUqS84Ik5_.png)
+![](image/image_nD6cEQWqsf.png)
 
 在所有节点上准备 Java 环境并安装 Spark [（步骤 2 的“sudo wget”）](https://time.geekbang.org/column/article/419200?screen=full#:~:text=你可以参考-,这里,-的链接 "（步骤 2 的“sudo wget”）")
 
-![](image/image_2RNPDIWUre.png)
+![](image/image_KZ3ZdXyWaG.png)
 
 我们就可以依次启动 Master 和 Worker 节点
 
-![](image/image_8YTedjR9NZ.png)
+![](image/image_kTuMhhxQQo.png)
 
 集群启动之后，我们可以使用 Spark 自带的小例子，来验证 Standalone 分布式部署是否成功。首先，打开 Master 或是 Worker 的命令行终端，然后敲入下面这个命令：
 
@@ -280,15 +293,15 @@ MASTER=spark://node0:7077 $SPARK_HOME/bin/run-example org.apache.spark.examples.
 
 Spark调度系统的核心环节与关键步骤。通过比喻，将Driver比作总公司，Executors比作分公司，DAGScheduler、TaskScheduler和SchedulerBackend则分别扮演重要角色。DAGScheduler负责提交任务调度请求，TaskScheduler负责将任务派发给合适的Executor，而SchedulerBackend则与资源管理器强绑定，提供WorkerOffer并协调人力资源。
 
-![](image/image_wec0adOXk3.png)
+![](image/image_IPoU9ndVcX.png)
 
 DAGScheduler 手里有“活儿”，SchedulerBackend 手里有“人力”，TaskScheduler 的核心职能，就是把合适的“活儿”派发到合适的“人”的手里。
 
-![](image/image_5gfB2cLyFT.png)
+![](image/image_bv6ZL0D4iw.png)
 
 3巨头信息传递机制
 
-![](image/image_GNo6SrTeLT.png)
+![](image/image_tKxZylBIZJ.png)
 
 ### #06 Shuffle管理：为什么Shuffle是性能瓶颈？
 
@@ -296,13 +309,13 @@ Shuffle 指的是集群范围内跨节点、跨进程的数据分发。
 
 #### Shuffle 工作原理：Shuffle 是 Map 阶段与 Reduce 阶段之间的数据交换。
 
-![](image/image_UEpB5RDUSm.png)
+![](image/image_w3DrQTXRW2.png)
 
 #### Shuffle 中间文件
 
 对于任意一条数据记录，Spark 先按照既定的哈希算法，计算记录主键的哈希值，然后把哈希值对 N 取模，计算得到的结果数字，就是这条记录在 Reduce 阶段的数据分区编号 P。换句话说，这条记录在 Shuffle 的过程中，应该被分发到 Reduce 阶段的 P 号分区。
 
-![](image/image_IMxcygloKK.png)
+![](image/image_XBqdDh7tGW.png)
 
 Shuffle Read
 
@@ -316,23 +329,23 @@ Shuffle Read
 
 Spark SQL 与 Spark Core 的关系：Spark Core 负责执行，而 Spark SQL 负责优化，Spark SQL 优化过后的代码，依然要交付 Spark Core 来做执行。
 
-![](image/image_0QaCBTxjag.png)
+![](image/image_aRmx3QBUC-.png)
 
 #### **1）逻辑优化**
 
 AST 语法树又叫作“执行计划”（Execution Plan）。
 
-![](image/image_WugKY3TPlo.png)
+![](image/image_MY-F6fUp4O.png)
 
 Parquet 格式在文件层面支持“谓词下推”（Predicates Pushdown）和“列剪枝”（Columns Pruning）这两项特性。
 
 > 谓词下推指的是，利用像“batchNum >= 201601”这样的过滤条件，在扫描文件的过程中，只读取那些满足条件的数据文件。又因为 Parquet 格式属于列存（Columns Store）数据结构，因此 Spark 只需读取字段名为“carNum”的数据文件，而“剪掉”读取其他数据文件的过程。
 
-![](image/image_5LZ4y0Team.png)
+![](image/image_TZrTyA0Lr_.png)
 
 从“Scan > Filter > Select”调整为“Filter > Select > Scan”，那么，相比原始的执行计划，调整后的执行计划能给 Spark Core 带来更好的执行性能。
 
-![](image/image_xudvsaULdY.png)
+![](image/image_j7HhgTpHMi.png)
 
 #### **2）物理优化**
 
@@ -346,7 +359,7 @@ Tungsten 设计并实现了一种叫做 Unsafe Row 的二进制数据结构。Un
 
 经过了 Tungsten 的 WSCG 优化之后，Filter、Select 和 Scan 这 3 个算子，会被“捏合”为一个函数 f。Spark Core 只需要使用函数 f 来一次性地处理每一条数据，就能消除不同算子之间数据通信的开销，一气呵成地完成计算。
 
-![](image/image_93wyqdMja4.png)
+![](image/image_0LB8yuOvul.png)
 
 ### #15 数据源与数据格式：DataFrame从何而来？
 
@@ -356,26 +369,26 @@ Tungsten 设计并实现了一种叫做 Unsafe Row 的二进制数据结构。Un
 
 **DataFrame 算子**
 
-![](image/image_sRpvgfkElJ.png)
+![](image/image_jkMKhcIUCX.png)
 
 #### 同源类算子
 
-![](image/image_zxX-fP3bl7.png)
+![](image/image_J6XDXISYZJ.png)
 
 #### 探索类算子
 
-![](image/image_Yf1gPIcH8D.png)
+![](image/image_3WuqTHEZ6a.png)
 
 #### 清洗类算子
 
-![](image/image_3nk5h7mI2Q.png)
+![](image/image_YMirgHJRqM.png)
 
 - employeesDF.na.drop 用于删除 DataFrame 中带 null 值的数据记录-&#x20;
 - employeesDF.na.fill(0) 则将 DataFrame 中所有的 null 值都自动填充为整数零
 
 #### 转换类算子
 
-![](image/image_QXHInyUfve.png)
+![](image/image_Al8nSTjTer.png)
 
 ```scala
 employeesDF.where(“gender = ‘Male’”) #想要过滤出所有性别为男的员工 
@@ -387,11 +400,11 @@ employeesDF.withColumn("crypto", hash($"age")).show #用于生成新的数据列
 
 #### 分析类算子
 
-![](image/image_ANNDdWXFDc.png)
+![](image/image_OXfyqGH5ZK.png)
 
 #### 持久化类算子
 
-![](image/image_5KJDjcp_kx.png)
+![](image/image_EW2lYcPpXP.png)
 
 ### #17\* 数据关联：不同的关联形式与实现机制该怎么选？
 
@@ -399,25 +412,25 @@ employeesDF.withColumn("crypto", hash($"age")).show #用于生成新的数据列
 
 #### 关联形式（Join Types）
 
-![](image/image_wzgE8ZY8-I.png)
+![](image/image_6UDegyqjzz.png)
 
 #### 实现机制（Join Mechanisms）
 
 一般来说，驱动表的体量往往较大，在实现关联的过程中，驱动表是主动扫描数据的那一方。而基表相对来说体量较小，它是被动参与数据扫描的那一方。
 
-![](image/image_Np11rfhGVG.png)
+![](image/image_LyXCrO0ctT.png)
 
 **NLJ：Nested Loop Join** - O(M,N)
 
-![](image/image_iWT2IUW43W.png)
+![](image/image_kW4sxw7JRm.png)
 
 **SMJ：Sort Merge Join** - O(M+N)
 
-![](image/image_thXV_g-YJn.png)
+![](image/image_-I2QmHaiow.png)
 
 **HJ：Hash Join** - O(1)
 
-![](image/image_DNG0vk7I3S.png)
+![](image/image_jhr8ZVzA0E.png)
 
 ```python
 # 在notebook上运行，先构建环境
@@ -459,3 +472,353 @@ jointDF6.show()
 
 
 # #18 数据关联优化：都有哪些Join策略，开发者该如何取舍？
+
+#### 结论
+
+![](image/image_1UafLbVCKR.png)
+
+数据分发模式的角度出发，数据关联又可以分为 Shuffle Join 和 Broadcast Join 这两大类
+
+对比了单机环境中不同 Join 机制的优劣势
+
+![](image/image_ds91GpuQRA.png)
+
+分布式环境中,两种策略的优劣势对比
+
+![](image/image_eWDhRfIQ0j.png)
+
+> Hash Join 这种算法对于内存的要求比较高，适用于内存能够容纳基表数据的计算场景。
+
+> Sort Merge Join 就没有内存方面的限制, 参与 Join 的两张表是有序表
+
+> NLJ 可以应付不等值关联（Non Equi Join）
+
+### #19 配置项详解：哪些参数会影响应用程序执行性能？
+
+AQE（Adaptive Query Execution）机制的 3 个特性，分别是 **Join 策略调整、自动分区合并、以及自动倾斜处理**。AQE 结合 Shuffle 中间文件提供的统计信息，在运行时动态地调整执行计划，从而达到优化作业执行性能的目的。
+
+- Join 策略调整：将原本的 Shuffle Join 策略，调整为 Broadcast Join 策略的过程
+- 自动分区合并：在于合并过小的数据分区，从而避免 Task 粒度过细、任务调度开销过高的问题
+- 自动倾斜处理：它的用途在于拆分过大的数据分区，从而避免个别 Task 负载过高而拖累整个作业的执行性能。
+
+![](image/image_Dtww-1E84Y.png)
+
+### #20  Hive + Spark强强联合
+
+![](image/image_r7-iqs6NP_.png)
+
+### #21 Spark UI：如何高效地定位性能问题？
+
+p
+
+![](image/image_kVDsZAPI9i.png)
+
+### #24\* 特征工程
+
+#### Official Doc
+
+[ Extracting, transforming and selecting features - Spark 3.5.4 Documentation  https://spark.apache.org/docs/latest/ml-features.html](https://spark.apache.org/docs/latest/ml-features.html " Extracting, transforming and selecting features - Spark 3.5.4 Documentation  https://spark.apache.org/docs/latest/ml-features.html")
+
+特征工程制约着模型效果，它决定了模型效果的上限，也就是“天花板”。而模型调优，仅仅是在不停地逼近这个“天花板”而已。
+
+![](image/image_Oz3l0sLsCD.png)
+
+**特征选择**
+
+![](image/image_ctoD204ox2.png)
+
+特征选择的动机，在于提取与预测标的关联度更高的特征，从而精简模型尺寸、提升模型泛化能力。特征选择可以从两方面入手，业务出发的专家经验和基于数据的统计分析。Spark MLlib 基于不同的统计方法，提供了多样的特征选择器（Feature Selectors），其中 ChiSqSelector 以卡方检验为基础，选择相关度最高的前 N 个特征。
+
+#### 1) 预处理：StringIndexer
+
+```python
+#属性中的非数值字段，转换为数值字段
+from pyspark.sql import SparkSession
+from pyspark.ml.feature import StringIndexer
+
+# 创建 SparkSession
+spark = SparkSession.builder.appName("FeatureEngineering").getOrCreate()
+
+# 假设 source_data_df 已经加载
+source_data_df = None  # 这里需要替换为实际的 DataFrame
+
+# 所有非数值型字段
+categorical_fields = [
+    "MSSubClass", "MSZoning", "Street", "Alley", "LotShape", "LandContour",
+    "Utilities", "LotConfig", "LandSlope", "Neighborhood", "Condition1",
+    "Condition2", "BldgType", "HouseStyle", "OverallQual", "OverallCond",
+    "YearBuilt", "YearRemodAdd", "RoofStyle", "RoofMatl", "Exterior1st",
+    "Exterior2nd", "MasVnrType", "ExterQual", "ExterCond", "Foundation",
+    "BsmtQual", "BsmtCond", "BsmtExposure", "BsmtFinType1", "BsmtFinType2",
+    "Heating", "HeatingQC", "CentralAir", "Electrical", "KitchenQual",
+    "Functional", "FireplaceQu", "GarageType", "GarageYrBlt", "GarageFinish",
+    "GarageQual", "GarageCond", "PavedDrive", "PoolQC", "Fence", "MiscFeature",
+    "MiscVal", "MoSold", "YrSold", "SaleType", "SaleCondition"
+]
+
+#####################
+# Can write a function for the script below.
+#####################
+
+# 生成对应的索引列名
+index_fields = [field + "Index" for field in categorical_fields]
+
+# 初始化工程 DataFrame
+engineering_df = source_data_df
+
+# 循环遍历所有非数值字段，使用 StringIndexer 进行转换
+for field, index_field in zip(categorical_fields, index_fields):
+    indexer = StringIndexer(inputCol=field, outputCol=index_field, handleInvalid="keep")
+    engineering_df = indexer.fit(engineering_df).transform(engineering_df)
+    engineering_df = engineering_df.drop(field)  # 删除原始列
+
+# engineering_df 现在是转换后的 DataFrame
+
+```
+
+
+![](image/image_UNACxIpBq9.png)
+
+#### 2) 特征选择：ChiSqSelector&#x20;
+
+只能用于数值型字段, 结合StringIndexer来处理非数值型数据。
+
+第一步，使用 VectorAssembler 创建特征向量；#本质：将每一行记录当作一个整体(向量)。
+
+```python
+# Define and initialize VectorAssembler
+assembler = VectorAssembler(inputCols=numeric_features, outputCol="features")
+
+#
+# Apply VectorAssembler to DataFrame
+gineeringDF = assembler.transform(engineeringDF)
+# engineeringDF 就包含了一个字段名为“features”的数据列，它的数据内容，就是拼接了所有数值特征的特征向量。
+
+ Code
+```
+
+
+```python
+from pyspark.sql.functions import col
+from pyspark.sql.types import IntegerType
+from pyspark.ml.feature import VectorAssembler
+
+# List of numeric fields
+numeric_fields = [
+    "LotFrontage", "LotArea", "MasVnrArea", "BsmtFinSF1", "BsmtFinSF2", "BsmtUnfSF", "TotalBsmtSF",
+    "1stFlrSF", "2ndFlrSF", "LowQualFinSF", "GrLivArea", "BsmtFullBath", "BsmtHalfBath", "FullBath", "HalfBath",
+    "BedroomAbvGr", "KitchenAbvGr", "TotRmsAbvGrd", "Fireplaces", "GarageCars", "GarageArea", "WoodDeckSF",
+    "OpenPorchSF", "EnclosedPorch", "3SsnPorch", "ScreenPorch", "PoolArea"
+]
+
+# Label field
+label_fields = ["SalePrice"]
+
+# Convert all numeric fields to IntegerType
+for field in numeric_fields + label_fields:
+    engineeringDF = engineeringDF.withColumn(f"{field}Int", col(field).cast(IntegerType())).drop(field)
+
+# List of transformed numeric fields
+numeric_features = [f"{field}Int" for field in numeric_fields]
+
+# Define and initialize VectorAssembler
+assembler = VectorAssembler(inputCols=numeric_features, outputCol="features")
+
+# Apply VectorAssembler to DataFrame
+gineeringDF = assembler.transform(engineeringDF)
+
+```
+
+
+第二步，基于特征向量，使用 ChiSqSelector 完成特征选择。
+
+```python
+from pyspark.ml.feature import ChiSqSelector
+
+# Define and initialize ChiSqSelector
+## 分别通过 setFeaturesCol 和 setLabelCol 来指定特征向量和预测标的。
+## numTopFeatures=20：p挑选出对房价影响最重要的前 20 个特征。
+selector = ChiSqSelector(featuresCol="features"
+      , labelCol="SalePriceInt", numTopFeatures=20) 
+
+# Fit ChiSqSelector on the DataFrame
+chi_square_model = selector.fit(engineeringDF)
+
+# Get selected feature indices
+indices = chi_square_model.selectedFeatures.tolist()
+
+# Retrieve original feature names based on indices
+selected_features = [numeric_fields[index] for index in indices]
+
+
+```
+
+
+#### 3) 归一化：MinMaxScaler
+
+当原始数据之间的量纲差异较大时，在模型训练的过程中，梯度下降不稳定、抖动较大，模型不容易收敛，从而导致训练效率较差。
+
+MinMaxScaler
+
+![](image/image_4tVoDfkZAB.png)
+
+```python
+from pyspark.ml.feature import VectorAssembler
+from pyspark.ml.feature import MinMaxScaler
+
+
+# Iterate over each numeric feature
+for field in numeric_features:
+    # Define and initialize VectorAssembler
+    assembler = VectorAssembler(inputCols=[field], outputCol=f"{field}Vector")
+    
+    # Transform each field from Int to Vector type
+    engineeringData = assembler.transform(engineeringData)
+
+
+
+# Lock all vector data columns
+vector_fields = [f"{field}Vector" for field in numeric_features]
+
+# Scaled data columns
+scaled_fields = [f"{field}Scaled" for field in vector_fields]
+
+# Iterate over all vector data columns
+for vector in vector_fields:
+    # Define and initialize MinMaxScaler
+    min_max_scaler = MinMaxScaler(inputCol=vector, outputCol=f"{vector}Scaled")
+    
+    # Apply MinMaxScaler for normalization
+    engineeringData = min_max_scaler.fit(engineeringData).transform(engineeringData)
+
+
+
+ 基于VectorAssembler特征向量，使用 MinMaxScaler 完成归一化。
+```
+
+
+#### 4)离散化：Bucketizer
+
+离散化的动机，主要在于提升特征数据的区分度与内聚性，从而与预测标的产生更强的关联。
+
+```python
+from pyspark.ml.feature import Bucketizer
+
+# 原始字段和目标字段
+field_bedroom = "BedroomAbvGrInt"
+field_bedroom_discrete = "BedroomDiscrete"
+
+# 指定离散区间
+splits = [-float("inf"), 3, 5, float("inf")]  # 对应[负无穷, 2], [3, 4], [5, 正无穷]
+
+# 创建示例DataFrame
+data = [(0,), (1,), (2,), (3,), (4,), (5,), (6,)]
+df = spark.createDataFrame(data, [field_bedroom])
+
+# 定义并初始化Bucketizer
+bucketizer = Bucketizer(
+    inputCol=field_bedroom,
+    outputCol=field_bedroom_discrete,
+    splits=splits
+)
+
+# 执行离散化转换
+df_bucketized = bucketizer.transform(df)
+
+# 显示结果
+df_bucketized.show()
+
+```
+
+
+#### 5) Embedding
+
+```python
+from pyspark.ml.feature import StringIndexer, OneHotEncoder
+from pyspark.sql import SparkSession
+
+# 创建 SparkSession
+spark = SparkSession.builder.appName("OneHotEncoding").getOrCreate()
+
+# 示例数据
+data = spark.createDataFrame([
+    (0, "A"),
+    (1, "B"),
+    (2, "C"),
+    (3, "A"),
+    (4, "B"),
+    (5, "C")
+], ["id", "category"])
+
+# 需要编码的分类字段
+categorical_fields = ["category"]
+
+# 生成索引字段（StringIndexer 的输出列）
+index_fields = [col + "Index" for col in categorical_fields]
+
+# 生成 OneHotEncoder 的输出字段
+ohe_fields = [col + "OHE" for col in categorical_fields]
+
+# StringIndexer: 将类别转换为索引
+indexers = [StringIndexer(inputCol=cat_col, outputCol=idx_col) 
+            for cat_col, idx_col in zip(categorical_fields, index_fields)]
+
+# OneHotEncoder: 对索引进行独热编码
+encoders = [OneHotEncoder(inputCol=idx_col, outputCol=ohe_col) 
+            for idx_col, ohe_col in zip(index_fields, ohe_fields)]
+
+# 依次转换数据
+from pyspark.ml import Pipeline
+
+pipeline = Pipeline(stages=indexers + encoders)
+model = pipeline.fit(data)
+transformed_data = model.transform(data)
+
+# 显示结果
+transformed_data.select("id", "category", "categoryIndex", "categoryOHE").show()
+ OneHotEncoder
+```
+
+
+#### 6) 向量计算
+
+```python
+from pyspark.ml.feature import StringIndexer, OneHotEncoder, VectorAssembler
+from pyspark.ml.linalg import VectorUDT, Vectors
+from pyspark.sql.functions import udf
+
+data = spark.createDataFrame([
+    (0, 1.0, 0.5, 3.0, "A"),
+    (1, 2.0, 0.7, 4.0, "B"),
+    (2, 3.0, 0.2, 2.0, "A"),
+], ["id", "feature1", "feature2", "bedroomDiscrete", "category"])
+
+# StringIndexer: 类别变量转换为索引
+indexer = StringIndexer(inputCol="category", outputCol="categoryIndex")
+data = indexer.fit(data).transform(data)
+
+# OneHotEncoder: 进行独热编码
+encoder = OneHotEncoder(inputCol="categoryIndex", outputCol="categoryOHE")
+data = encoder.fit(data).transform(data)
+
+# UDF: 将 array<double> 转换为 Vector
+to_vector_udf = udf(lambda arr: Vectors.dense(arr), VectorUDT())
+
+# 将 OneHotEncoder 结果转换为 Vector
+data = data.withColumn("categoryOHE_vec", to_vector_udf("categoryOHE"))
+
+# VectorAssembler: 合并特征列
+assembler = VectorAssembler(
+    inputCols=["feature1", "feature2", "bedroomDiscrete", "categoryOHE_vec"],
+    outputCol="features"
+)
+transformed_data = assembler.transform(data)
+
+# 显示结果
+transformed_data.select("id", "features").show(truncate=False)
+```
+
+
+### #26 ML
+
+![](image/image_TNmvRwWRl5.png)
