@@ -16,7 +16,7 @@ If you've cloned a repository from GitHub and now want to create a new, separate
 #### Step 2: Initialize Git in Your New Repository
 1. Open the Source Control panel in VS Code (click the Source Control icon in the sidebar or press `Ctrl+Shift+G`)
 2. Click the `Initialize Repository` button
-   - Alternatively, open the terminal (`Ctrl+\``) and run:
+   - Alternatively, open the terminal (Ctrl+` or View > Terminal) and run:
      ```bash
      git init
      ```
