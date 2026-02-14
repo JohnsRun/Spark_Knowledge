@@ -16,7 +16,7 @@ If you've cloned a repository from GitHub and now want to create a new, separate
 #### Step 2: Initialize Git in Your New Repository
 1. Open the Source Control panel in VS Code (click the Source Control icon in the sidebar or press `Ctrl+Shift+G`)
 2. Click the `Initialize Repository` button
-   - Alternatively, open the terminal (`Ctrl+``) and run:
+   - Alternatively, open the terminal (`Ctrl+\``) and run:
      ```bash
      git init
      ```
@@ -156,10 +156,20 @@ git remote add origin https://github.com/username/new-repo-name.git
 ### Authentication Issues
 If you're asked for credentials repeatedly:
 1. Consider using SSH keys (see above)
-2. Or set up Git credential helper:
-   ```bash
-   git config --global credential.helper store
-   ```
+2. Or use a credential helper (recommended for security):
+   - On Windows:
+     ```bash
+     git config --global credential.helper wincred
+     ```
+   - On macOS:
+     ```bash
+     git config --global credential.helper osxkeychain
+     ```
+   - On Linux:
+     ```bash
+     git config --global credential.helper cache
+     ```
+   - For more information, see [GitHub's credential helper documentation](https://docs.github.com/en/get-started/getting-started-with-git/caching-your-github-credentials-in-git)
 
 ### Push Rejected Due to Conflicts
 If your push is rejected:
