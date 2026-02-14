@@ -9,3 +9,5 @@
 [Health Insurance Medical Payout Prediction](https://github.com/JohnsRun/Spark_Knowledge/blob/main/SparkAPI_Machine_Learning/Health_Insurance_Medical_Payout_Prediction.ipynb)
 
 3.Spark Demo: [Practical Operators](https://github.com/JohnsRun/Spark_Knowledge/blob/main/SparkAPI_Demo.ipynb)
+
+4.GitHub & VS Code Guide: [How to Create a New Repository and Push to GitHub](https://github.com/JohnsRun/Spark_Knowledge/blob/main/VSCode_GitHub_Workflow.md)
